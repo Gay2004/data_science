@@ -154,12 +154,22 @@ plt.show()
 print("\nSaved → part_a_boxplot.png")
 
 # part B — required vs elective
-print("\n" + "=" * 65)
-print("PART B — Required vs Elective (all courses combined)")
-print("=" * 65)
+course_groups = df.groupby(COURSE_COL)['Q3'].unique()
 
-req_scores = df[df[TYPE_COL] == "required"][EVAL_COL].dropna()
-elec_scores = df[df[TYPE_COL] == "elective"][EVAL_COL].dropna()
+strictly_req_courses = course_groups[course_groups.apply(lambda x: len(x) == 1 and x[0] == 1)].index
+strictly_elec_courses = course_groups[course_groups.apply(lambda x: len(x) == 1 and x[0] == 2)].index
+
+print(f"Found {len(strictly_req_courses)} strictly REQUIRED courses.")
+print(f"Found {len(strictly_elec_courses)} strictly ELECTIVE courses.")
+
+df_strict_req = df[df[COURSE_COL].isin(strictly_req_courses)]
+df_strict_elec = df[df[COURSE_COL].isin(strictly_elec_courses)]
+
+req_scores = df_strict_req['Q20'].dropna()
+elec_scores = df_strict_elec['Q20'].dropna()
+
+import scipy.stats as stats
+t_stat, p_val = stats.ttest_ind(req_scores, elec_scores, equal_var=False)
 
 # descriptive statistics
 desc = pd.DataFrame({
@@ -172,7 +182,7 @@ desc = pd.DataFrame({
     "Max": [req_scores.max(), elec_scores.max()],
 }).round(3)
 
-print("\nDescriptive Statistics — Q19 (Overall course rating, 1–5):")
+print("\nDescriptive Statistics — Q20 (Overall course rating, 1–5):")
 print(desc.to_string(index=False))
 
 # t-test
